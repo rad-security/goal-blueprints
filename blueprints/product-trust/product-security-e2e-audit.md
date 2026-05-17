@@ -2,6 +2,17 @@
 
 Use this when you need a sandbox-only, product-wide audit that combines real user journey testing with security verification across UI, API, data, logs, docs, and setup paths.
 
+This blueprint is intentionally broad. It is best for launch readiness, major product changes, trust reviews, and "does this actually work safely for a real user?" investigations. It is not a replacement for a focused authZ, supply-chain, or AI security eval; use those narrower blueprints when the security question is already specific.
+
+Minimum useful inputs:
+
+- Sandbox or staging URL
+- Test account creation path or seeded test users
+- Repo and deployment instructions
+- Docs/setup path a real user would follow
+- Log/API/database access for verification
+- A list of user roles, tenants, organizations, or workspaces if the product has them
+
 ```text
 /goal
 
@@ -12,11 +23,13 @@ This is an audit and documentation pass only. Do not implement fixes unless expl
 
 CONTEXT:
 [Product/app] has been changing quickly and needs a reality check in [sandbox/staging/local].
-The audit must cover UX, functionality, usability, docs, onboarding, setup, product value, auth/authZ, backend behavior, database state, API behavior, logs, edge cases, and real work completion.
+The audit must cover UX, functionality, usability, docs, onboarding, setup, product value, auth/authZ, tenant boundaries if present, backend behavior, database state, API behavior, logs, edge cases, data integrity, and real work completion.
+Treat this as a user trust audit, not just a bug hunt. Look for places where the product causes uncertainty, hides risk, overstates success, loses state, misrepresents backend truth, exposes sensitive data, or leaves the user unsure what happened.
 Use [sandbox/staging/local] only. Do not touch production data or production infrastructure.
 Use the repo instructions in [AGENTS.md/CLAUDE.md/project docs] if present.
 If code inspection is needed, inspect only. Do not make code edits.
 Use browser automation, logs, network inspection, database inspection, API calls, accessibility checks, and source reading as needed.
+If access, credentials, feature flags, seeded data, or observability are incomplete, document the boundary and continue only where the evidence standard can still be met.
 
 CONSTRAINTS:
 Audit and document only. No product code changes.
@@ -28,6 +41,7 @@ Do not assume UI behavior is correct just because the UI appears successful. Ver
 Do not assume docs are correct. Reproduce setup steps exactly from the docs.
 Do not skip small controls: click every button, table filter, sort, dropdown, toggle, switch, empty state CTA, destructive action, invite flow, settings control, and navigation path.
 Do not stop at happy paths. Test failure paths, permission boundaries, empty states, loading states, validation, retries, duplicate actions, malformed inputs, long text, mobile viewport, slow network, refresh/back-button behavior, and interrupted flows.
+Do not hide uncertainty. If a surface cannot be verified, mark it unknown with the specific missing access or missing evidence.
 Do not report vague issues. Every finding needs reproduction steps, severity, observed behavior, expected behavior, user impact, and evidence.
 
 PRIORITY:
@@ -45,6 +59,8 @@ Start by mapping the product surface:
 - Public entry points, marketing pages, docs, auth, onboarding, dashboard, settings, tables, core workflows, integrations, billing-like surfaces if present, admin-like surfaces if present, and support/help paths.
 - List all roles, permissions, feature flags, environment assumptions, and sandbox credentials needed.
 - Identify backend services, API routes, database tables, queues, jobs, webhooks, logs, and external integrations involved in each major flow.
+- Identify user-visible promises: security claims, reliability claims, automation claims, integration promises, setup promises, and "success" states that must be backed by real system behavior.
+- Identify trust-critical data: secrets, tokens, API keys, customer identifiers, tenant/org identifiers, audit logs, billing-like data, user-generated content, and operational outputs.
 
 Create a real user narrative:
 - Define the user's problem before using [product/app].
@@ -53,6 +69,7 @@ Create a real user narrative:
 - Follow setup exactly as written.
 - Complete the first meaningful job the product promises to solve.
 - Continue into advanced and repeated-use workflows.
+- Include at least one "skeptical operator" pass: question whether the product's success messages, status indicators, and persisted state are telling the truth.
 
 Execute testing in layers:
 1. Discovery and docs audit
@@ -65,6 +82,8 @@ Execute testing in layers:
 8. Backend/API/database/log verification
 9. Responsive, accessibility, performance, and UX polish audit
 10. Product value and user trust assessment
+11. Security messaging and sensitive-data exposure audit
+12. Final evidence reconciliation pass
 
 For every major flow:
 - State the user intent.
@@ -75,6 +94,8 @@ For every major flow:
 - Refresh and revisit to confirm state durability.
 - Test cancel/back/retry/failure paths.
 - Test access as lower-privilege users and unrelated tenants where applicable.
+- Check whether success, warning, and error states are precise enough for a real operator to trust.
+- Check whether sensitive values are masked, scoped, copied, logged, exported, and deleted appropriately.
 - Rate the UX against confidence, clarity, speed, trust, and user anxiety.
 
 DONE WHEN:
@@ -95,6 +116,8 @@ Check keyboard navigation and focus behavior.
 Check loading, empty, error, success, and permission states.
 Check persistence after refresh, logout/login, and time gaps where relevant.
 Check authZ behavior by attempting actions with lower-privilege roles and unrelated tenants.
+Check audit logs, activity feeds, or event streams for security-relevant actions if the product exposes them.
+Check whether sensitive values appear in URLs, local storage, logs, screenshots, exports, clipboard flows, or downloadable artifacts.
 Run existing tests only if useful for context, but do not treat passing tests as a substitute for manual product audit.
 State any verification that could not be performed and why.
 

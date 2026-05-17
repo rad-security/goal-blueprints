@@ -118,3 +118,15 @@ Add stop rules that prevent the agent from lowering the verification bar when ac
 5. Run in sandbox or read-only mode first.
 6. Review evidence.
 7. Convert validated findings into issues, fixes, or follow-up goals.
+
+## Choosing A Category
+
+Use categories to make the security question obvious before someone opens the file:
+
+- `product-trust`: user journeys, launch readiness, trust breaks, and whole-product audits.
+- `access-boundaries`: auth, sessions, authorization, tenant isolation, and permission edges.
+- `ai-security`: AI features, agents, retrieval, tool use, memory, and evals.
+- `software-supply-chain`: secrets, dependencies, CI/CD, repo integrity, packages, and releases.
+- `cloud-runtime`: IaC, IAM, runtime hardening, network exposure, storage, and cloud drift.
+- `detection-response`: incident replay, alerting, logs, runbooks, and recurrence prevention.
+- `data-protection`: privacy, logging, telemetry, retention, deletion, exports, and data flow.

@@ -2,6 +2,17 @@
 
 Use this when you need to review a repo or service for exposed secrets, risky dependencies, CI/CD over-permissioning, container issues, insecure build practices, or provenance gaps.
 
+This blueprint is designed to produce owner-ready remediation, not just scanner output. It asks the agent to classify findings, avoid leaking secrets, distinguish reachable risk from generic advisory noise, and stop before actions that require human approval.
+
+Minimum useful inputs:
+
+- Local checkout of the repo
+- Package manager and lockfiles
+- CI/CD workflow files
+- Container and IaC files if present
+- Known deployment/release path
+- Permission to run read-only scanners and local tests
+
 ```text
 /goal
 
@@ -11,6 +22,8 @@ Review [repo/service] for secrets exposure and software supply-chain risk until 
 CONTEXT:
 Use [repo], package manifests, lockfiles, CI/CD configuration, container files, IaC, deployment manifests, secret scanning output, dependency advisories, build scripts, and release documentation.
 The target environment is [local/sandbox/staging]. Production credential rotation, production CI secret changes, and destructive repository history changes are out of scope unless explicitly approved later.
+Treat this as a hardening pass across source, dependency graph, build path, release path, and runtime packaging.
+If the repo is a monorepo, map each package/app/service and avoid assuming one dependency manifest represents the whole system.
 
 CONSTRAINTS:
 Do not rotate live credentials.
@@ -20,6 +33,8 @@ Do not delete dependencies or change build behavior unless the change is clearly
 Do not alter production CI/CD secrets, environments, deploy keys, package publishing credentials, or release settings.
 Do not rely on one scanner only. Cross-check high-risk findings manually.
 Prefer minimal patches that reduce risk without broad refactors.
+Do not mark dependency advisories as irrelevant without explaining reachability, package usage, environment exposure, and compensating controls.
+Do not add broad ignore rules. Any ignore must be narrow, justified, and tied to a verified false positive.
 
 PRIORITY:
 1. Live or plausibly live secret exposure
@@ -34,22 +49,29 @@ PLAN:
 Map the supply-chain surface:
 - Identify languages, package managers, lockfiles, workspace layout, build scripts, containers, IaC, CI systems, release jobs, artifact registries, and deployment paths.
 - Identify where secrets enter the system: env files, CI secrets, cloud credentials, deploy keys, package tokens, webhooks, local dev docs, and test fixtures.
+- Identify trust boundaries: forked PRs, external contributors, generated code, vendored code, install scripts, build artifacts, cache restores, downloaded binaries, container base images, and release signing.
+- Identify what can publish, deploy, sign, upload artifacts, or access secrets.
 
 Run and inspect secret exposure checks:
 - Scan current tree with available secret scanners.
 - Inspect common high-risk paths: `.env*`, config files, CI files, docs, examples, fixtures, tests, scripts, notebooks, logs, and generated artifacts.
 - If git history scanning is available and safe, run it read-only and summarize suspected historical exposures.
 - Manually classify findings as confirmed secret, test/dummy, false positive, or unknown.
+- Check whether example credentials are obviously fake and documented as examples.
+- Check whether secret-like values are embedded in Docker layers, generated bundles, committed lockfiles, screenshots, docs, or test snapshots.
 
 Run and inspect dependency checks:
 - Use package-manager audit tools where available.
 - Inspect direct dependencies, transitive criticals, abandoned packages, install scripts, Git URL dependencies, local path dependencies, broad version ranges, and lockfile drift.
 - Check whether advisories are exploitable in this repo's usage where practical.
+- Identify dependencies with lifecycle scripts, native extensions, postinstall downloads, unpinned Git references, or unusually broad permissions.
+- Check whether security-critical packages are pinned, maintained, and consistent across workspaces.
 
 Review CI/CD and build paths:
 - Inspect workflow permissions, token scopes, pull_request_target usage, untrusted input execution, artifact upload/download, cache keys, secret availability to forks, and package publishing steps.
 - Inspect Dockerfiles and build scripts for pinned versions, remote curl/bash patterns, root usage, secret leakage into layers, and unsafe build args.
 - Inspect IaC and deployment manifests for overly broad IAM, public exposure, insecure defaults, and sensitive outputs.
+- Inspect provenance and release controls: branch protection assumptions, required checks, artifact signing, SBOM generation, release notes, image tags, package publishing, and deploy approvals.
 
 Patch only when safe:
 - Remove committed dummy secrets only if replacement is straightforward.
@@ -74,6 +96,8 @@ Run tests, build, lint, or package-manager checks after any patch.
 Inspect diffs for accidental secret disclosure.
 Inspect CI config for effective permissions and secret exposure patterns.
 Inspect Docker build and IaC files manually where scanners are not available.
+Check whether generated artifacts, bundles, and container layers could include secrets or source maps that expose sensitive code.
+Check whether supply-chain fixes preserve lockfile integrity and do not introduce unexpected dependency churn.
 State any scanner, registry, or advisory source that was unavailable.
 
 OUTPUT:

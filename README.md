@@ -24,14 +24,52 @@ These blueprints turn that loop into a reusable operating contract.
 
 Always confirm the behavior in your installed tool and version before running unattended work.
 
-## Blueprint Index
+## Blueprint Catalog
+
+### Product Trust
 
 | Blueprint | Use When | Output |
 | --- | --- | --- |
-| [Product Security E2E Audit](blueprints/product-security-e2e-audit.md) | You need a sandbox-only, product-wide security and trust audit across UI, API, data, logs, docs, setup, and user workflows. | Audit report, coverage matrix, findings backlog, backend/data map. |
-| [AuthZ and Tenant Boundary Audit](blueprints/authz-tenant-boundary-audit.md) | You need to validate role-based access control, object-level authorization, and tenant isolation. | Role matrix, route/API coverage, bypass findings, reproduction steps. |
-| [Secrets and Supply Chain Hardening](blueprints/secrets-supply-chain-hardening.md) | You need to find exposed secrets, dependency risk, CI/CD over-permissioning, container issues, or provenance gaps. | Remediation-ready findings, safe patches, rotation checklist, residual risk register. |
-| [AI App Security Eval](blueprints/ai-app-security-eval.md) | You need to test an AI feature for prompt injection, tool abuse, retrieval leakage, and unsafe agent behavior. | Eval cases, run results, failure analysis, mitigations, regression test plan. |
+| [Product Security E2E Audit](blueprints/product-trust/product-security-e2e-audit.md) | You need a sandbox-only product-wide security and trust audit across UI, API, data, logs, docs, setup, and user workflows. | Audit report, coverage matrix, findings backlog, backend/data map. |
+| [Launch Readiness Security Review](blueprints/product-trust/launch-readiness-security-review.md) | You are preparing a major launch, beta, release, or public demo and need to know whether the feature is safe to ship. | Launch verdict, release surface matrix, blockers, rollback and observability assessment. |
+
+### Access Boundaries
+
+| Blueprint | Use When | Output |
+| --- | --- | --- |
+| [AuthZ and Tenant Boundary Audit](blueprints/access-boundaries/authz-tenant-boundary-audit.md) | You need to validate role-based access control, object-level authorization, and tenant isolation. | Role matrix, route/API coverage, bypass findings, reproduction steps. |
+| [Session and Authentication Hardening](blueprints/access-boundaries/session-authentication-hardening.md) | You need to review login, logout, sessions, cookies, MFA, reset flows, OAuth/OIDC, and CSRF behavior. | Auth flow matrix, token/cookie assessment, session findings, hardening backlog. |
+
+### AI Security
+
+| Blueprint | Use When | Output |
+| --- | --- | --- |
+| [AI App Security Eval](blueprints/ai-security/ai-app-security-eval.md) | You need to test an AI feature for prompt injection, tool abuse, retrieval leakage, and unsafe agent behavior. | Eval cases, run results, failure analysis, mitigations, regression test plan. |
+
+### Software Supply Chain
+
+| Blueprint | Use When | Output |
+| --- | --- | --- |
+| [Secrets and Supply Chain Hardening](blueprints/software-supply-chain/secrets-supply-chain-hardening.md) | You need to find exposed secrets, dependency risk, CI/CD over-permissioning, container issues, or provenance gaps. | Remediation-ready findings, safe patches, rotation checklist, residual risk register. |
+| [Repository Integrity and CI Hardening](blueprints/software-supply-chain/repository-integrity-ci-hardening.md) | You need to review whether CI/CD, repository settings, release workflows, or package publishing can be abused. | Workflow risk matrix, release control assessment, review bypass findings, remediation plan. |
+
+### Cloud Runtime
+
+| Blueprint | Use When | Output |
+| --- | --- | --- |
+| [Cloud and IaC Exposure Audit](blueprints/cloud-runtime/cloud-iac-exposure-audit.md) | You need to review IaC, runtime config, IAM, public exposure, network boundaries, storage, secrets, and deployment manifests. | Exposure summary, infrastructure matrix, IAM findings, drift and residual risk. |
+
+### Detection Response
+
+| Blueprint | Use When | Output |
+| --- | --- | --- |
+| [Incident Replay and Detection Validation](blueprints/detection-response/incident-replay-detection-validation.md) | You need to validate whether an incident, bug bounty, red-team, or near-miss scenario is detectable and preventable. | Replay summary, timeline comparison, detection gaps, runbook assessment, regression plan. |
+
+### Data Protection
+
+| Blueprint | Use When | Output |
+| --- | --- | --- |
+| [Privacy, Logging, and Telemetry Audit](blueprints/data-protection/privacy-logging-telemetry-audit.md) | You need to trace sensitive data through UI, APIs, logs, analytics, exports, retention, deletion, and third-party telemetry. | Data-flow matrix, canary trace results, leakage findings, privacy promise mismatches. |
 
 ## Recommended `/goal` Structure
 
@@ -84,6 +122,7 @@ Conditions where the agent must stop instead of improvising.
 3. Tighten the stop rules for your environment.
 4. Run in a trusted workspace with the right sandbox and approval settings.
 5. Review evidence before acting on findings.
+6. Convert validated findings into issues, patches, follow-up goals, or launch decisions.
 
 ## Writing Your Own
 

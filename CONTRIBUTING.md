@@ -5,9 +5,9 @@ This repository is for reusable `/goal` blueprints, especially for security engi
 ## Adding A Blueprint
 
 1. Start from [templates/goal-template.md](templates/goal-template.md).
-2. Place the new file in [blueprints](blueprints).
+2. Place the new file in the most relevant category under [blueprints](blueprints).
 3. Use a short, descriptive filename such as `incident-replay-detection-validation.md`.
-4. Add the blueprint to the index table in [README.md](README.md) and [blueprints/README.md](blueprints/README.md).
+4. Add the blueprint to the index table in [README.md](README.md), [blueprints/README.md](blueprints/README.md), and the category README.
 5. Keep the blueprint focused on one security question or workflow.
 
 ## Required Sections

@@ -2,6 +2,16 @@
 
 Use this when you need to validate role-based access control, object-level authorization, tenant isolation, invitation flows, admin boundaries, and API bypass resistance.
 
+This blueprint is built for finding the failures that usually do not show up in happy-path QA: ID swapping, stale membership, hidden-but-callable APIs, cross-tenant exports, invite edge cases, and role transitions that leave old permissions behind.
+
+Minimum useful inputs:
+
+- At least two synthetic tenants, organizations, accounts, or workspaces
+- Multiple synthetic users with different roles
+- API access or a way to replay browser requests
+- Policy docs or expected role matrix
+- Database/log access if available
+
 ```text
 /goal
 
@@ -14,6 +24,8 @@ CONTEXT:
 Use [repo], [sandbox URL], [API base URL], [test tenants/orgs], [test users], [role matrix], [policy docs], [API docs], and [logs/database access].
 The audit must cover UI access control, direct API access, object-level authorization, cross-tenant data access, invitations, membership changes, admin actions, destructive actions, billing-like surfaces if present, and background jobs or webhooks that can mutate tenant-scoped data.
 Use synthetic tenants and users only.
+Assume the UI may be incomplete evidence. Treat the server-side authorization decision as the source of truth.
+Pay special attention to resource identifiers passed in URLs, JSON bodies, GraphQL variables, headers, cookies, local storage, websocket messages, exports, imports, and async job payloads.
 
 CONSTRAINTS:
 No production systems.
@@ -22,6 +34,7 @@ No destructive action unless performed against clearly isolated test objects.
 Do not change auth provider settings, production roles, SSO configuration, or live customer memberships.
 Do not assume hiding a UI control is authorization. Verify server-side enforcement through direct API calls.
 Do not assume a successful API response is correct. Verify response body, database state, logs, and persistence after refresh/relogin.
+Do not stop after testing only one resource type. Apply the same actor/resource/action pattern to every sensitive resource class.
 Every finding must include actor role, tenant/org context, object ID pattern, API route or UI path, expected behavior, actual behavior, evidence, and severity.
 
 PRIORITY:
@@ -39,6 +52,8 @@ Map the authorization model:
 - List all user roles, permission levels, admin types, service accounts, and special cases.
 - Build a role-action-resource matrix from docs, code, API definitions, and observed UI behavior.
 - Identify sensitive resources, privileged actions, and destructive actions.
+- Identify ownership transitions: invite, accept invite, remove user, role downgrade, role upgrade, transfer ownership, leave org, disable account, delete resource, archive resource, restore resource.
+- Identify non-UI entry points: API routes, GraphQL operations, background jobs, exports, webhooks, CLI commands, integration callbacks, and deep links.
 
 Create test identities:
 - At least two unrelated tenants/orgs.
@@ -56,6 +71,8 @@ Test each major surface:
 8. Background jobs, webhooks, async tasks, and exports if present
 9. Error messages for information disclosure
 10. Logs and database state for hidden failures
+11. Bulk operations, pagination, search, filters, autocomplete, and analytics endpoints
+12. File downloads, preview URLs, signed URLs, and share links if present
 
 For every protected action:
 - Test allowed role succeeds.
@@ -63,6 +80,8 @@ For every protected action:
 - Test unrelated tenant fails.
 - Test unauthenticated request fails.
 - Test stale or removed access fails.
+- Test direct object ID substitution where safe.
+- Test duplicate submission and replay where safe.
 - Verify API response status, response body, database state, logs, and UI persistence.
 
 DONE WHEN:
@@ -80,6 +99,8 @@ Query database state where available to verify ownership, membership, and persis
 Inspect server logs for forbidden requests, unexpected 500s, sensitive identifiers, and policy decision details.
 Refresh pages and relogin to confirm persistence.
 Attempt ID substitution and replay using synthetic IDs only.
+Check that denied requests do not leak resource names, counts, existence, metadata, or signed URLs.
+Check that audit logs record privileged and denied security-relevant actions where the product promises auditability.
 Run existing authZ tests if useful, but do not treat them as sufficient coverage.
 
 OUTPUT:
