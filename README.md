@@ -132,7 +132,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the blueprint format and review check
 
 ## License
 
-No license has been selected yet. Add one before inviting broad external reuse.
+Apache-2.0. See [LICENSE](LICENSE).
 
 ## Safety Note
 
