@@ -27,10 +27,21 @@ Use synthetic tenants and users only.
 Assume the UI may be incomplete evidence. Treat the server-side authorization decision as the source of truth.
 Pay special attention to resource identifiers passed in URLs, JSON bodies, GraphQL variables, headers, cookies, local storage, websocket messages, exports, imports, and async job payloads.
 
+EVIDENCE SOURCES:
+Completeness in this audit is measured against an external enumeration, not against what the agent happens to discover.
+Before testing begins, the operator must supply an authoritative enumeration of protected routes, API endpoints, roles, tenant-scoped resource types, and destructive or state-changing actions.
+Acceptable enumeration sources:
+- An OpenAPI or Swagger specification for the service.
+- A framework route table dump, such as `rails routes`, `manage.py show_urls`, the FastAPI `/openapi.json` document, or Express router introspection.
+- An IAM or RBAC role export, such as `aws iam list-roles`, `gcloud iam roles list`, or RBAC role manifests held in the repo.
+- An explicit role-action-resource policy matrix maintained in the repo.
+Name each enumeration source by file path, command, or document. Reject vague inputs such as "from the documentation" or "from the codebase" that do not identify a specific artifact.
+If no authoritative enumeration is available, treat that as a blocking gap: report it and do not certify completeness from agent discovery alone.
+
 CONSTRAINTS:
 No production systems.
 No real customer data.
-No destructive action unless performed against clearly isolated test objects.
+No state-changing or destructive call without explicit human approval obtained immediately before that call. State-changing includes create, update, delete, role change, membership change, invite, ownership transfer, archive, restore, and any export or job that mutates state. The agent does not decide whether an object is isolated or synthetic enough to mutate; a human approves each such call.
 Do not change auth provider settings, production roles, SSO configuration, or live customer memberships.
 Do not assume hiding a UI control is authorization. Verify server-side enforcement through direct API calls.
 Do not assume a successful API response is correct. Verify response body, database state, logs, and persistence after refresh/relogin.
@@ -85,7 +96,8 @@ For every protected action:
 - Verify API response status, response body, database state, logs, and UI persistence.
 
 DONE WHEN:
-Every sensitive route, API endpoint, role boundary, tenant-scoped resource, destructive action, invite/membership path, admin setting, and export/import path has pass/fail/unknown coverage.
+Every protected route, API endpoint, role boundary, tenant-scoped resource, destructive action, invite/membership path, admin setting, and export/import path listed in the external enumeration source has pass/fail/unknown coverage. Completeness is measured against that enumeration, not against the agent's own discovery.
+A coverage diff between the agent-discovered set and the external enumeration is reported. Routes, endpoints, roles, resources, or actions the agent exercised but that are absent from the enumeration are reported as drift findings. Entries present in the enumeration but not tested are coverage gaps, and while any coverage gap remains the goal is not complete.
 A role-action-resource matrix exists and is reconciled against observed behavior.
 Every confirmed issue has severity P0-P3, exact reproduction steps, affected actor, affected resource, expected behavior, actual behavior, evidence, and user impact.
 All unknowns are explicitly listed with the missing access, missing docs, or blocking ambiguity.
@@ -104,6 +116,8 @@ Check that audit logs record privileged and denied security-relevant actions whe
 Run existing authZ tests if useful, but do not treat them as sufficient coverage.
 
 OUTPUT:
+Assign every severity rating using the SEVERITY RUBRIC at the end of this blueprint. Do not assign severity ad hoc.
+
 Produce:
 
 1. Executive summary
@@ -147,8 +161,21 @@ Produce:
 
 STOP RULES:
 Stop immediately if there is any risk of touching production data, real customer tenants, real users, or live auth provider configuration.
-Stop before changing roles, memberships, SSO settings, billing settings, or destructive resources unless the objects are confirmed synthetic and isolated.
+Stop before any state-changing call to roles, memberships, SSO settings, billing settings, or destructive resources, and proceed only after a human approves that specific call.
 Stop if test tenants, test identities, API access, or logs are insufficient to verify server-side enforcement.
 Do not silently replace direct API verification with UI-only testing.
 Do not implement fixes.
+
+SEVERITY RUBRIC:
+Assign every severity rating from demonstrated impact and exploitability, not from intuition.
+Severity reflects what an unauthorized actor can do, not how the weakness was found.
+
+P0: Cross-tenant data read or mutation, privilege escalation to admin or owner, or a destructive action reachable by an actor who should not reach it, demonstrated with synthetic-equivalent access.
+P1: Broken object-level authorization, a sensitive route with no server-side enforcement, or a destructive or state-changing action reachable by a lower-privilege role inside the same tenant.
+P2: UI and API authorization mismatch, information disclosure through error messages, counts, existence checks, or metadata, or a stale-access window that persists after a role or membership change.
+P3: Ambiguous or undocumented policy, missing authZ test coverage, or a hardening gap with no demonstrated bypass.
+
+A finding that chains into a higher-impact path takes the severity of the resulting impact, not the entry point.
+If exploitability is not demonstrated, record the finding at the lower severity and list the missing proof as an unknown.
+A coverage gap against the external enumeration is at least P3 until the gap is closed or the path is shown unreachable.
 ```
